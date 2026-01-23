@@ -17,7 +17,7 @@ frc::Rotation2d fromRotations(double rot) {
 SwerveModule::SwerveModule(int moduleNumber, int driveMotorID, int angleMotorID, frc::Rotation2d angleOffset, int canCoderID) :
 moduleNumber{moduleNumber},
 angleOffset{angleOffset},
-angleEncoder{canCoderID},
+angleEncoder{canCoderID, "can1"},
 angleMotor{angleMotorID, rev::spark::SparkLowLevel::MotorType::kBrushless},
 integratedAngleEncoder{angleMotor.GetEncoder()},
 angleController{angleMotor.GetClosedLoopController()},

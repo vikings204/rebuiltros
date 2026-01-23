@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(apriltags)
+project(apriltags LANGUAGES CXX CUDA)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -13,8 +13,8 @@ include_directories("/home/team204/ros2_ws/src/apriltags/lib/cuapriltags/cuapril
 add_library(libcuapriltags STATIC IMPORTED)
 set_property(TARGET libcuapriltags PROPERTY IMPORTED_LOCATION "/home/team204/ros2_ws/src/apriltags/lib/cuapriltags/lib_aarch64_jetpack51/libcuapriltags.a")
 
-find_package(CUDA REQUIRED)
-include_directories("${CUDA_INCLUDE_DIRS}")
+find_package(CUDAToolkit REQUIRED)
+include_directories("${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 find_package(OpenCV REQUIRED)
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 

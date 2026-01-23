@@ -13,7 +13,7 @@ target_include_directories(swerve PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_compile_features(swerve PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
-ament_target_dependencies(swerve rclcpp std_msgs vikings_msgs)
+ament_target_dependencies(swerve rclcpp rclcpp_action std_msgs vikings_msgs)
 target_link_libraries(swerve revlib wpilibc hal phoenix6)
 
 install(TARGETS swerve

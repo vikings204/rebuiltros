@@ -28,6 +28,8 @@ public:
     void ZeroDriveEncoder();
     const int moduleNumber;
 
+    bool IsAtSetpoint();
+
 private:
     frc::Rotation2d lastAngle;
     frc::Rotation2d angleOffset;

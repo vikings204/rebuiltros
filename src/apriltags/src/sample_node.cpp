@@ -23,7 +23,7 @@ void loadImageToCuAprilTagsInput(const std::string& imagePath, cuAprilTagsImageI
 
   cudaMalloc(&inputImage.dev_ptr, img.rows * img.cols * sizeof(uchar3) * 8);
   cudaError_t memcpyErr = cudaMemcpy(inputImage.dev_ptr, img.data, img.rows * img.cols*sizeof(uchar3)*8, cudaMemcpyHostToDevice); // skeptical
-  std::cout << "memcpy error: " << cudaGetErrorString(memcpyErr) << "\n";
+  std::cout << "memcpy err: " << cudaGetErrorString(memcpyErr) << "\n";
 
   unsigned char* data = new unsigned char[img.rows * img.cols * sizeof(uchar3) * 8];
   cudaMemcpy(data, inputImage.dev_ptr, img.rows * img.cols * sizeof(uchar3) * 8, cudaMemcpyDeviceToHost);
@@ -46,7 +46,7 @@ int main(int argc, char ** argv)
   printf("hello world apriltags package\n");
 
   cuAprilTagsImageInput_t inputImage;
-  loadImageToCuAprilTagsInput("image2.jpg", inputImage);
+  loadImageToCuAprilTagsInput("/home/team204/ros2_ws/image2.jpg", inputImage);
 
 
   cuAprilTagsCameraIntrinsics_t intrinsics{
@@ -59,7 +59,7 @@ int main(int argc, char ** argv)
   cudaStream_t stream = {};
 
   const int error = nvCreateAprilTagsDetector(&detector, 1600, 1304, 4, cuAprilTagsFamily::NVAT_TAG36H11, &intrinsics, 0.1651);
-  std::cout << "create error code: " << error << "\n";
+  std::cout << "create err code: " << error << "\n";
   auto streamErr = cudaStreamCreate(&stream);
   if (streamErr != 0) {
     std::cout << cudaGetErrorString(streamErr);
@@ -70,7 +70,7 @@ int main(int argc, char ** argv)
   auto timeStart = std::chrono::high_resolution_clock::now();
   const int error2 = cuAprilTagsDetect(detector, &inputImage, tags.data(), &num_detections, 10, stream);
   auto timeEnd = std::chrono::high_resolution_clock::now();
-  std::cout << "detect error code: " << error2 << "\n";
+  std::cout << "detect err code: " << error2 << "\n";
 
   std::chrono::duration<double> timeElapsed = timeEnd - timeStart;
   std::cout << "elapsed time for detection: " << timeElapsed.count() << " s\n";

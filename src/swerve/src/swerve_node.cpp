@@ -8,7 +8,7 @@ using namespace Constants::Swerve;
 
 SwerveNode::SwerveNode() :
 Node{"swerve"},
-gyro{9},
+gyro{9, "can1"},
 modules{
     SwerveModule{0, 11, 21, frc::Rotation2d{units::degree_t{0.75 * 360.0}}, 31},
     SwerveModule{1, 12, 22, frc::Rotation2d{units::degree_t{0.888 * 360.0}}, 32},
@@ -22,7 +22,7 @@ modules{
     auto driveCbWrapper = [this](const std::shared_ptr<vikings_msgs::srv::DriveSwerve::Request> request, const std::shared_ptr<vikings_msgs::srv::DriveSwerve::Response> response) {
         DriveCb(request, response);
     };
-    driveService = this->create_service<vikings_msgs::srv::DriveSwerve>("swerve/drive", driveCbWrapper);
+    driveService = this->create_service<vikings_msgs::srv::DriveSwerve>("swerve/donotusethis", driveCbWrapper);
 
     auto zeroGyroCb = [this](const std::shared_ptr<vikings_msgs::srv::Blank::Request> request, const std::shared_ptr<vikings_msgs::srv::Blank::Response> response) {
         (void) request;
@@ -37,14 +37,28 @@ modules{
         ZeroDriveEncoders();
     };
     zeroDriveEncodersService = this->create_service<vikings_msgs::srv::Blank>("swerve/zeroDriveEncoders", zeroDriveEncodersCb);
+
+    this->actionServer = rclcpp_action::create_server<vikings_msgs::action::DriveSwerve>(
+            this,
+            "swerve/drive",
+            [](auto uuid, auto goal) { (void) uuid; (void) goal; return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE; },
+            [](auto goal_handle) { (void) goal_handle; return rclcpp_action::CancelResponse::ACCEPT; },
+            [this](auto goal_handle) {
+                (void) goal_handle;
+                std::thread t([this, goal_handle]() {
+                    this->Drive(goal_handle);
+                });
+                t.detach();
+            }
+            );
 }
 
 void SwerveNode::DriveCb(const std::shared_ptr<vikings_msgs::srv::DriveSwerve::Request> request, const std::shared_ptr<vikings_msgs::srv::DriveSwerve::Response> response) {
     (void) response;
 
-    std::cout << "x: " << request->x << " y: " << request->y << " rot: " << request->rot << " teleop: " << request->teleop << "\n";
+    std::cout << "DRIVE: x: " << request->x << " y: " << request->y << " rot: " << request->rot << " field_relative: " << request->field_relative << " open_loop: " << request->open_loop << "\n";
 
-    auto newStates = SWERVE_KINEMATICS.ToSwerveModuleStates(request->teleop ?
+    auto newStates = SWERVE_KINEMATICS.ToSwerveModuleStates(request->field_relative ?
         frc::ChassisSpeeds::FromFieldRelativeSpeeds(units::meters_per_second_t{request->x}, units::meters_per_second_t{request->y}, units::radians_per_second_t{request->rot}, GetYaw()) :
         frc::ChassisSpeeds{units::meters_per_second_t{request->x}, units::meters_per_second_t{request->y}, units::radians_per_second_t{request->rot}}
     );
@@ -65,4 +79,9 @@ void SwerveNode::ZeroDriveEncoders() {
     for (SwerveModule& mod : modules) {
         mod.ZeroDriveEncoder();
     }
+}
+
+
+void SwerveNode::Drive(const GoalHandle h) {
+
 }

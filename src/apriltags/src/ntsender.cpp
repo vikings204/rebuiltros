@@ -94,6 +94,7 @@ int main(int argc, char ** argv)
                     double roll = euler[2] * 180 / M_PI; // turn
 
                     // std::cout << "yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
+                    std::cout << "id=" << t.id << " tx=" << t.translation[0] << " ty=" << t.translation[1] << " tz=" << t.translation[2] << " yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
 
                     nt_id_pub.Set(t.id);
                     nt_tx_pub.Set(t.translation[0]);

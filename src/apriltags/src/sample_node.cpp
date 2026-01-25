@@ -76,6 +76,15 @@ int main(int argc, char ** argv)
   std::cout << "elapsed time for detection: " << timeElapsed.count() << " s\n";
   std::cout << "estimated fps: " << 1 / timeElapsed.count() << "\n";
 
+    // while (true) {
+    //     timeStart = std::chrono::high_resolution_clock::now();
+    //     cuAprilTagsDetect(detector, &inputImage, tags.data(), &num_detections, 10, stream);
+    //     timeEnd = std::chrono::high_resolution_clock::now();
+    //     timeElapsed = timeEnd - timeStart;
+    //     std::cout << "elapsed time for detection: " << timeElapsed.count() << " s\n";
+    //     std::cout << "estimated fps: " << 1 / timeElapsed.count() << "\n=====\n";
+    // }
+
   if (num_detections > 0) {
     for (auto t : tags) {
       if (t.id == 0) {

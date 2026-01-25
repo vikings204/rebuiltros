@@ -6,6 +6,7 @@
 #include <networktables/DoubleTopic.h>
 #include <networktables/IntegerTopic.h>
 #include <eigen3/Eigen/Dense>
+#include <chrono>
 
 int main(int argc, char ** argv)
 {
@@ -15,10 +16,9 @@ int main(int argc, char ** argv)
     cv::VideoCapture cap{0, cv::CAP_V4L2};
     cap.set(cv::CAP_PROP_FRAME_WIDTH, 1600);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1304);
-    cap.set(cv::CAP_PROP_AUTO_EXPOSURE, 0.5);
-    cap.set(cv::CAP_PROP_EXPOSURE, 1);
-    // cap.set(cv::CAP_PROP_GAIN, 0);
-    cap.set(cv::CAP_PROP_GAIN, 4);
+    cap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1);
+    cap.set(cv::CAP_PROP_EXPOSURE, 75); // 0 to 100+
+    cap.set(cv::CAP_PROP_GAIN, 0);
     cv::Mat frame;
     cuAprilTagsImageInput_t imageInput;
 
@@ -65,22 +65,30 @@ int main(int argc, char ** argv)
     std::cout << "malloc error: " << cudaGetErrorString(mallocErr) << "\n";
 
     // cap >> frame;
-    // cv::imwrite("stupid.jpg", frame);
+    // cv::imwrite("stupid2.jpg", frame);
     // std::exit(0);
 
+    // cv::Mat dummyImg = cv::imread("/home/team204/ros2_ws/dummy.jpg", cv::IMREAD_GRAYSCALE);
+    // cv::cvtColor(dummyImg, frame, cv::COLOR_GRAY2RGB);
+
     while (true) {
+        auto timeStart = std::chrono::high_resolution_clock::now();
         cap >> frame;
+        auto timeCapture = std::chrono::high_resolution_clock::now();
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
         //std::cout << "capt\n";
+        auto timeColorConvert = std::chrono::high_resolution_clock::now();
 
         const cudaError_t memcpyErr = cudaMemcpy(imageInput.dev_ptr, frame.data, 1304 * 1600 * sizeof(uchar3), cudaMemcpyHostToDevice);
         //std::cout << "memcpy error: " << cudaGetErrorString(memcpyErr) << "\n";
         imageInput.width = frame.cols;
         imageInput.height = frame.rows;
         imageInput.pitch = frame.cols*sizeof(uchar3);
+        auto timeMemcpy = std::chrono::high_resolution_clock::now();
 
         const int error2 = cuAprilTagsDetect(detector, &imageInput, tags.data(), &num_detections, tags.capacity(), stream);
         //std::cout << "detect error code: " << error2 << "\n";
+        auto timeDetect = std::chrono::high_resolution_clock::now();
 
         if (num_detections > 0) {
             for (auto t : tags) {
@@ -94,7 +102,7 @@ int main(int argc, char ** argv)
                     double roll = euler[2] * 180 / M_PI; // turn
 
                     // std::cout << "yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
-                    std::cout << "id=" << t.id << " tx=" << t.translation[0] << " ty=" << t.translation[1] << " tz=" << t.translation[2] << " yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
+                    //std::cout << "id=" << t.id << " tx=" << t.translation[0] << " ty=" << t.translation[1] << " tz=" << t.translation[2] << " yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
 
                     nt_id_pub.Set(t.id);
                     nt_tx_pub.Set(t.translation[0]);
@@ -116,6 +124,22 @@ int main(int argc, char ** argv)
             //nt_roll_pub.Set(0);
             //std::cout << "no detections.\n";
         }
+        auto timeProcessing = std::chrono::high_resolution_clock::now();
+
+        std::chrono::duration<double> timeToCapture = timeCapture - timeStart;
+        std::chrono::duration<double> timeToColorConvert = timeColorConvert - timeCapture;
+        std::chrono::duration<double> timeToMemcpy = timeMemcpy - timeColorConvert;
+        std::chrono::duration<double> timeToDetect = timeDetect - timeMemcpy;
+        std::chrono::duration<double> timeToProcess = timeProcessing - timeDetect;
+        std::chrono::duration<double> timeTotal = timeProcessing - timeStart;
+        std::cout << "capture: " << timeToCapture.count() << " s\n";
+        std::cout << "colorconvert: " << timeToColorConvert.count() << " s\n";
+        std::cout << "memcpy: " << timeToMemcpy.count() << " s\n";
+        std::cout << "detect: " << timeToDetect.count() << " s\n";
+        std::cout << "processing: " << timeToProcess.count() << " s\n";
+        std::cout << "TOTAL: " << timeTotal.count() << " s\n";
+        std::cout << "EST FPS: " << 1 / timeTotal.count() << "\n";
+        std::cout << "num detections: " << num_detections << "\n=====\n";
     }
 
   cudaFree(imageInput.dev_ptr);

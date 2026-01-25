@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-set(FRC_YEAR "2025")
+set(FRC_YEAR "2026")
 
 # ros dependencies
 find_package(ament_cmake REQUIRED)

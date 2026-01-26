@@ -43,10 +43,10 @@ int main(int argc, char ** argv)
     nt_roll_pub.SetDefault(0);
 
     cuAprilTagsCameraIntrinsics_t intrinsics{
-        1991.333,
-        1982.145,
-        766.253,
-        652.362,
+        2030.2729812371426,
+        2042.5411550248295,
+        748.1422029281408,
+        709.6692282439393,
     };
     cuAprilTagsHandle detector = nullptr;
     cudaStream_t stream = {};
@@ -67,7 +67,7 @@ int main(int argc, char ** argv)
     }
 
     uint32_t num_detections;
-    std::vector<cuAprilTagsID_t> tags(3);
+    std::vector<cuAprilTagsID_t> tags(6);
 
     const cudaError_t mallocErr = cudaMalloc(&imageInput.dev_ptr, imageWidth * imageHeight * sizeof(uchar3));
     std::cout << "malloc error: " << cudaGetErrorString(mallocErr) << "\n";

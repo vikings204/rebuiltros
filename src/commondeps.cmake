@@ -24,6 +24,7 @@ target_include_directories(msgpack INTERFACE "/home/team204/thirdparty/cppack/ms
 set(CMAKE_PREFIX_PATH "/home/team204/thirdparty/${FRC_YEAR}/wpilib")
 find_package(wpilibc CONFIG REQUIRED)
 find_package(hal CONFIG REQUIRED)
+find_package(wpiutil CONFIG REQUIRED)
 
 # vendordeps, some related to each other
 

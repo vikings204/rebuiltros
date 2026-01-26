@@ -29,7 +29,33 @@ target_link_libraries(sample_node ${CUDA_LIBRARIES} ${OpenCV_LIBS} libcuapriltag
 add_executable(ntsender src/ntsender.cpp)
 target_link_libraries(ntsender ${CUDA_LIBRARIES} ${OpenCV_LIBS} libcuapriltags ntcore)
 
-install(TARGETS sample_node ntsender
+# frc971 detector testing
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_STANDARD 20)
+if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+  set(CMAKE_CUDA_ARCHITECTURES 87)
+endif()
+if(NOT DEFINED CMAKE_CUDA20_STANDARD_COMPILE_OPTION)
+  set(CMAKE_CUDA20_STANDARD_COMPILE_OPTION "-std=c++20")
+  set(CMAKE_CUDA20_EXTENSION_COMPILE_OPTION "-std=c++20")
+endif()
+set(CMAKE_CUDA_FLAGS "--expt-relaxed-constexpr")
+add_compile_options(-Wno-pedantic)
+add_executable(newdetector
+        src/newdetector.cpp
+        src/frc971/orin/971apriltag.cu
+        src/frc971/orin/apriltag_detect.cu
+        src/frc971/orin/labeling_allegretti_2019_BKE.cu
+        src/frc971/orin/line_fit_filter.cu
+        src/frc971/orin/points.cu
+        src/frc971/orin/threshold.cu
+        src/frc971/orin/cuda.cc
+)
+target_link_libraries(newdetector ${CUDA_LIBRARIES} ${OpenCV_LIBS} wpiutil ntcore "/home/team204/ros2_ws/src/apriltags/src/third_party/apriltag/build/libapriltag.a")
+target_include_directories(newdetector PRIVATE "/home/team204/ros2_ws/src/apriltags/src/")
+
+install(TARGETS sample_node ntsender newdetector
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

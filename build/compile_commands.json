@@ -9,6 +9,46 @@
   "command": "/usr/bin/c++  -I/home/team204/thirdparty/2026/revlib-driver/include -I/home/team204/thirdparty/2026/revlib/include -I/home/team204/thirdparty/2026/phoenix6-tools/include -I/home/team204/thirdparty/2026/phoenix6/include -I/home/team204/ros2_ws/src/apriltags/lib/cuapriltags/cuapriltags -I/usr/local/cuda-12.6/targets/aarch64-linux/include -isystem /usr/include/opencv4 -isystem /home/team204/thirdparty/2025/wpilib/include/ntcore -isystem /home/team204/thirdparty/2025/wpilib/include/wpinet -isystem /home/team204/thirdparty/2025/wpilib/include/wpiutil -Wall -Wextra -Wpedantic -std=gnu++20 -o CMakeFiles/ntsender.dir/src/ntsender.cpp.o -c /home/team204/ros2_ws/src/apriltags/src/ntsender.cpp",
   "file": "/home/team204/ros2_ws/src/apriltags/src/ntsender.cpp"
 },
+{
+  "directory": "/home/team204/ros2_ws/build/apriltags",
+  "command": "/usr/bin/c++  -I/home/team204/thirdparty/2026/revlib-driver/include -I/home/team204/thirdparty/2026/revlib/include -I/home/team204/thirdparty/2026/phoenix6-tools/include -I/home/team204/thirdparty/2026/phoenix6/include -I/home/team204/ros2_ws/src/apriltags/lib/cuapriltags/cuapriltags -I/usr/local/cuda-12.6/targets/aarch64-linux/include -I/home/team204/ros2_ws/src/apriltags/src -isystem /usr/include/opencv4 -isystem /home/team204/thirdparty/2025/wpilib/include/wpiutil -isystem /home/team204/thirdparty/2025/wpilib/include/ntcore -isystem /home/team204/thirdparty/2025/wpilib/include/wpinet -Wall -Wextra -Wpedantic -Wno-pedantic -std=gnu++20 -o CMakeFiles/newdetector.dir/src/newdetector.cpp.o -c /home/team204/ros2_ws/src/apriltags/src/newdetector.cpp",
+  "file": "/home/team204/ros2_ws/src/apriltags/src/newdetector.cpp"
+},
+{
+  "directory": "/home/team204/ros2_ws/build/apriltags",
+  "command": "/usr/local/cuda-12.6/bin/nvcc -forward-unknown-to-host-compiler  -I/home/team204/thirdparty/2026/revlib-driver/include -I/home/team204/thirdparty/2026/revlib/include -I/home/team204/thirdparty/2026/phoenix6-tools/include -I/home/team204/thirdparty/2026/phoenix6/include -I/home/team204/ros2_ws/src/apriltags/lib/cuapriltags/cuapriltags -I/usr/local/cuda-12.6/targets/aarch64-linux/include -I/home/team204/ros2_ws/src/apriltags/src -isystem=/usr/include/opencv4 -isystem=/home/team204/thirdparty/2025/wpilib/include/wpiutil -isystem=/home/team204/thirdparty/2025/wpilib/include/ntcore -isystem=/home/team204/thirdparty/2025/wpilib/include/wpinet --expt-relaxed-constexpr --generate-code=arch=compute_87,code=[compute_87,sm_87] -Wall -Wextra -Wpedantic -Wno-pedantic -std=c++20 -x cu -c /home/team204/ros2_ws/src/apriltags/src/frc971/orin/971apriltag.cu -o CMakeFiles/newdetector.dir/src/frc971/orin/971apriltag.cu.o",
+  "file": "/home/team204/ros2_ws/src/apriltags/src/frc971/orin/971apriltag.cu"
+},
+{
+  "directory": "/home/team204/ros2_ws/build/apriltags",
+  "command": "/usr/local/cuda-12.6/bin/nvcc -forward-unknown-to-host-compiler  -I/home/team204/thirdparty/2026/revlib-driver/include -I/home/team204/thirdparty/2026/revlib/include -I/home/team204/thirdparty/2026/phoenix6-tools/include -I/home/team204/thirdparty/2026/phoenix6/include -I/home/team204/ros2_ws/src/apriltags/lib/cuapriltags/cuapriltags -I/usr/local/cuda-12.6/targets/aarch64-linux/include -I/home/team204/ros2_ws/src/apriltags/src -isystem=/usr/include/opencv4 -isystem=/home/team204/thirdparty/2025/wpilib/include/wpiutil -isystem=/home/team204/thirdparty/2025/wpilib/include/ntcore -isystem=/home/team204/thirdparty/2025/wpilib/include/wpinet --expt-relaxed-constexpr --generate-code=arch=compute_87,code=[compute_87,sm_87] -Wall -Wextra -Wpedantic -Wno-pedantic -std=c++20 -x cu -c /home/team204/ros2_ws/src/apriltags/src/frc971/orin/apriltag_detect.cu -o CMakeFiles/newdetector.dir/src/frc971/orin/apriltag_detect.cu.o",
+  "file": "/home/team204/ros2_ws/src/apriltags/src/frc971/orin/apriltag_detect.cu"
+},
+{
+  "directory": "/home/team204/ros2_ws/build/apriltags",
+  "command": "/usr/local/cuda-12.6/bin/nvcc -forward-unknown-to-host-compiler  -I/home/team204/thirdparty/2026/revlib-driver/include -I/home/team204/thirdparty/2026/revlib/include -I/home/team204/thirdparty/2026/phoenix6-tools/include -I/home/team204/thirdparty/2026/phoenix6/include -I/home/team204/ros2_ws/src/apriltags/lib/cuapriltags/cuapriltags -I/usr/local/cuda-12.6/targets/aarch64-linux/include -I/home/team204/ros2_ws/src/apriltags/src -isystem=/usr/include/opencv4 -isystem=/home/team204/thirdparty/2025/wpilib/include/wpiutil -isystem=/home/team204/thirdparty/2025/wpilib/include/ntcore -isystem=/home/team204/thirdparty/2025/wpilib/include/wpinet --expt-relaxed-constexpr --generate-code=arch=compute_87,code=[compute_87,sm_87] -Wall -Wextra -Wpedantic -Wno-pedantic -std=c++20 -x cu -c /home/team204/ros2_ws/src/apriltags/src/frc971/orin/labeling_allegretti_2019_BKE.cu -o CMakeFiles/newdetector.dir/src/frc971/orin/labeling_allegretti_2019_BKE.cu.o",
+  "file": "/home/team204/ros2_ws/src/apriltags/src/frc971/orin/labeling_allegretti_2019_BKE.cu"
+},
+{
+  "directory": "/home/team204/ros2_ws/build/apriltags",
+  "command": "/usr/local/cuda-12.6/bin/nvcc -forward-unknown-to-host-compiler  -I/home/team204/thirdparty/2026/revlib-driver/include -I/home/team204/thirdparty/2026/revlib/include -I/home/team204/thirdparty/2026/phoenix6-tools/include -I/home/team204/thirdparty/2026/phoenix6/include -I/home/team204/ros2_ws/src/apriltags/lib/cuapriltags/cuapriltags -I/usr/local/cuda-12.6/targets/aarch64-linux/include -I/home/team204/ros2_ws/src/apriltags/src -isystem=/usr/include/opencv4 -isystem=/home/team204/thirdparty/2025/wpilib/include/wpiutil -isystem=/home/team204/thirdparty/2025/wpilib/include/ntcore -isystem=/home/team204/thirdparty/2025/wpilib/include/wpinet --expt-relaxed-constexpr --generate-code=arch=compute_87,code=[compute_87,sm_87] -Wall -Wextra -Wpedantic -Wno-pedantic -std=c++20 -x cu -c /home/team204/ros2_ws/src/apriltags/src/frc971/orin/line_fit_filter.cu -o CMakeFiles/newdetector.dir/src/frc971/orin/line_fit_filter.cu.o",
+  "file": "/home/team204/ros2_ws/src/apriltags/src/frc971/orin/line_fit_filter.cu"
+},
+{
+  "directory": "/home/team204/ros2_ws/build/apriltags",
+  "command": "/usr/local/cuda-12.6/bin/nvcc -forward-unknown-to-host-compiler  -I/home/team204/thirdparty/2026/revlib-driver/include -I/home/team204/thirdparty/2026/revlib/include -I/home/team204/thirdparty/2026/phoenix6-tools/include -I/home/team204/thirdparty/2026/phoenix6/include -I/home/team204/ros2_ws/src/apriltags/lib/cuapriltags/cuapriltags -I/usr/local/cuda-12.6/targets/aarch64-linux/include -I/home/team204/ros2_ws/src/apriltags/src -isystem=/usr/include/opencv4 -isystem=/home/team204/thirdparty/2025/wpilib/include/wpiutil -isystem=/home/team204/thirdparty/2025/wpilib/include/ntcore -isystem=/home/team204/thirdparty/2025/wpilib/include/wpinet --expt-relaxed-constexpr --generate-code=arch=compute_87,code=[compute_87,sm_87] -Wall -Wextra -Wpedantic -Wno-pedantic -std=c++20 -x cu -c /home/team204/ros2_ws/src/apriltags/src/frc971/orin/points.cu -o CMakeFiles/newdetector.dir/src/frc971/orin/points.cu.o",
+  "file": "/home/team204/ros2_ws/src/apriltags/src/frc971/orin/points.cu"
+},
+{
+  "directory": "/home/team204/ros2_ws/build/apriltags",
+  "command": "/usr/local/cuda-12.6/bin/nvcc -forward-unknown-to-host-compiler  -I/home/team204/thirdparty/2026/revlib-driver/include -I/home/team204/thirdparty/2026/revlib/include -I/home/team204/thirdparty/2026/phoenix6-tools/include -I/home/team204/thirdparty/2026/phoenix6/include -I/home/team204/ros2_ws/src/apriltags/lib/cuapriltags/cuapriltags -I/usr/local/cuda-12.6/targets/aarch64-linux/include -I/home/team204/ros2_ws/src/apriltags/src -isystem=/usr/include/opencv4 -isystem=/home/team204/thirdparty/2025/wpilib/include/wpiutil -isystem=/home/team204/thirdparty/2025/wpilib/include/ntcore -isystem=/home/team204/thirdparty/2025/wpilib/include/wpinet --expt-relaxed-constexpr --generate-code=arch=compute_87,code=[compute_87,sm_87] -Wall -Wextra -Wpedantic -Wno-pedantic -std=c++20 -x cu -c /home/team204/ros2_ws/src/apriltags/src/frc971/orin/threshold.cu -o CMakeFiles/newdetector.dir/src/frc971/orin/threshold.cu.o",
+  "file": "/home/team204/ros2_ws/src/apriltags/src/frc971/orin/threshold.cu"
+},
+{
+  "directory": "/home/team204/ros2_ws/build/apriltags",
+  "command": "/usr/bin/c++  -I/home/team204/thirdparty/2026/revlib-driver/include -I/home/team204/thirdparty/2026/revlib/include -I/home/team204/thirdparty/2026/phoenix6-tools/include -I/home/team204/thirdparty/2026/phoenix6/include -I/home/team204/ros2_ws/src/apriltags/lib/cuapriltags/cuapriltags -I/usr/local/cuda-12.6/targets/aarch64-linux/include -I/home/team204/ros2_ws/src/apriltags/src -isystem /usr/include/opencv4 -isystem /home/team204/thirdparty/2025/wpilib/include/wpiutil -isystem /home/team204/thirdparty/2025/wpilib/include/ntcore -isystem /home/team204/thirdparty/2025/wpilib/include/wpinet -Wall -Wextra -Wpedantic -Wno-pedantic -std=gnu++20 -o CMakeFiles/newdetector.dir/src/frc971/orin/cuda.cc.o -c /home/team204/ros2_ws/src/apriltags/src/frc971/orin/cuda.cc",
+  "file": "/home/team204/ros2_ws/src/apriltags/src/frc971/orin/cuda.cc"
+},
 
 {
   "directory": "/home/team204/ros2_ws/build/robotcomm",

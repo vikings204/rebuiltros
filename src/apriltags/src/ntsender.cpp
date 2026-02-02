@@ -35,12 +35,11 @@ int main(int argc, char ** argv)
     auto nt_ts_pub = table->GetDoubleTopic("timestamp").Publish();
     auto nt_px_pub = table->GetDoubleTopic("px").Publish();
     auto nt_py_pub = table->GetDoubleTopic("py").Publish();
-    auto nt_pz_pub = table->GetDoubleTopic("pz").Publish();
+    auto nt_tags_pub = table->GetDoubleTopic("tags").Publish();
     auto nt_delay_pub = table->GetDoubleTopic("delay").Publish();
     nt_ts_pub.SetDefault(0);
     nt_px_pub.SetDefault(0);
     nt_py_pub.SetDefault(0);
-    nt_pz_pub.SetDefault(0);
     nt_delay_pub.SetDefault(0);
 
     // camera matrix
@@ -116,8 +115,8 @@ int main(int argc, char ** argv)
         // auto timeDetect = std::chrono::high_resolution_clock::now();
 
         if (num_detections > 0) {
-            std::vector<frc::Transform3d> transforms;
-            std::vector<int> ids;
+            std::vector<frc::Pose3d> poses;
+            std::vector<float> magnitudes;
 
             for (auto t : tags) {
                 if (t.id == 0) {
@@ -125,61 +124,58 @@ int main(int argc, char ** argv)
                     continue;
                 }
 
-                //std::cout << "id=" << t.id << " tx=" << t.translation[0] << " ty=" << t.translation[1] << " tz=" << t.translation[2] << " r0=" << t.orientation[0] << " r1=" << t.orientation[1] << " r2=" << t.orientation[2] << " r3=" << t.orientation[3] << " r4=" << t.orientation[4] << " r5=" << t.orientation[5] << " r6=" << t.orientation[6] << " r7=" << t.orientation[7] << " r8=" << t.orientation[8] << "\n";
                 const Eigen::Map<const Eigen::Matrix<float, 3, 3, Eigen::ColMajor>>orientation(t.orientation);
                 const Eigen::Quaternion<float> q(orientation);
-                // auto euler = q.toRotationMatrix().eulerAngles(0, 1, 2);
                 auto euler = q.toRotationMatrix().canonicalEulerAngles(0, 1, 2);
                 double yaw = euler[1] * 180 / M_PI; // left-right
                 double pitch = euler[0] * 180 / M_PI; // up-down
                 double roll = euler[2] * 180 / M_PI; // turn
 
-                // std::cout << "yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
-                std::cout << "id=" << t.id << " tx=" << t.translation[0] << " ty=" << t.translation[1] << " tz=" << t.translation[2] << " yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
+                // std::cout << "id=" << t.id << " tx=" << t.translation[0] << " ty=" << t.translation[1] << " tz=" << t.translation[2] << " yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
 
-                // auto rot3dEDN = frc::Rotation3d(frc::Quaternion(q.w(), q.x(), q.y(), q.z()));
-                auto rot3dEDN = frc::Rotation3d(units::radian_t{euler[2]}, units::radian_t{euler[0]}, units::radian_t{-euler[1]});
-                // EDN_TO_NWU.unaryMinus().plus(rot.plus(EDN_TO_NWU));
-                auto rot3dNWU = -EDN_TO_NWU + (rot3dEDN + EDN_TO_NWU);
-
-                auto trl3dEDN = frc::Translation3d(units::meter_t{-t.translation[2]}, units::meter_t{t.translation[0]}, units::meter_t{-t.translation[1]});
-                // auto trl3dEDN = frc::Translation3d(units::meter_t{t.translation[0]}, units::meter_t{t.translation[1]}, units::meter_t{t.translation[2]});
-                auto trl3dNWU = trl3dEDN.RotateBy(EDN_TO_NWU);
-
-                // auto best = frc::Transform3d(trl3dNWU, rot3dNWU);
-                auto best = frc::Transform3d(trl3dEDN, rot3dEDN);
-                transforms.emplace_back(best);
-                ids.push_back(t.id);
+                auto rot = frc::Rotation3d(units::radian_t{euler[2]}, units::radian_t{euler[0]}, units::radian_t{-euler[1]});
+                auto trl = frc::Translation3d(units::meter_t{-t.translation[2]}, units::meter_t{t.translation[0]}, units::meter_t{-t.translation[1]});
+                poses.emplace_back(layout.GetTagPose(t.id).value().TransformBy(frc::Transform3d(trl, rot).Inverse()));
+                magnitudes.push_back(sqrt(t.translation[0]*t.translation[0] + t.translation[1]*t.translation[1] + t.translation[2]*t.translation[2]));
             }
 
-            if (transforms.size() == 1) {
+            if (poses.size() == 1) {
                 // one tag, just send the pose
+                auto p = poses[0];
                 auto sendTime = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> secondsSinceCapture = sendTime - captureTime;
-                auto t = layout.GetTagPose(ids[0]).value().TransformBy(transforms[0].Inverse());
 
-                nt_px_pub.Set(t.X().value());
-                nt_py_pub.Set(t.Y().value());
-                nt_pz_pub.Set(t.Z().value());
-                // also need t.rot.quat.wxyz
-                std::cout << "px=" << t.X().value() << " py=" << t.Y().value() << " pz=" << t.Z().value() << "\n";
+                std::cout << "tags=1 px=" << p.X().value() << " py=" << p.Y().value() << " time=" << secondsSinceCapture.count() << "s\n";
+                nt_px_pub.Set(p.X().value());
+                nt_py_pub.Set(p.Y().value());
+                nt_tags_pub.Set(1);
                 nt_delay_pub.Set(secondsSinceCapture.count());
                 nt_ts_pub.Set(sendTime.time_since_epoch().count());
             } else {
-                // multitag, do sqpnp? or weighted avg based on distances
-                std::cout << "multiple tags!! IDK WHAT TO DO\n";
-            }
+                // weighted average based on cam-to-tag distance
+                float total_px = 0.0;
+                float total_py = 0.0;
+                float total_weight = 0.0;
+                for (unsigned long i = 0; i < poses.size(); i++) {
+                    auto p3d = poses[i];
+                    auto p = p3d.ToPose2d();
+                    float w = pow(M_E, -0.5 * magnitudes[i]);
+                    total_px += p.X().value() * w;
+                    total_py += p.Y().value() * w;
+                    total_weight += w;
+                }
+                float px = total_px / total_weight;
+                float py = total_py / total_weight;
 
-            break;
-        } else {
-            //nt_id_pub.Set(0); // let java know that we lost the tag
-            //nt_tx_pub.Set(0);
-            //nt_ty_pub.Set(0);
-            //nt_tz_pub.Set(0);
-            //nt_yaw_pub.Set(0);
-            //nt_pitch_pub.Set(0);
-            //nt_roll_pub.Set(0);
-            //std::cout << "no detections.\n";
+                auto sendTime = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double> secondsSinceCapture = sendTime - captureTime;
+                std::cout << "tags=" << poses.size() << " px=" << px << " py=" << py << " time=" << secondsSinceCapture.count() << "s\n";
+                nt_px_pub.Set(px);
+                nt_py_pub.Set(py);
+                nt_tags_pub.Set(poses.size());
+                nt_delay_pub.Set(secondsSinceCapture.count());
+                nt_ts_pub.Set(sendTime.time_since_epoch().count());
+            }
         }
         // auto timeProcessing = std::chrono::high_resolution_clock::now();
 

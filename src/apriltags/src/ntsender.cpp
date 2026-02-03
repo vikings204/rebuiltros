@@ -40,15 +40,16 @@ int main(int argc, char ** argv)
     nt_ts_pub.SetDefault(0);
     nt_px_pub.SetDefault(0);
     nt_py_pub.SetDefault(0);
+    nt_tags_pub.SetDefault(0);
     nt_delay_pub.SetDefault(0);
 
     // camera matrix
     // [ [fx, 0, cx], [0, fy, cy], [0, 0, 1] ]
     cuAprilTagsCameraIntrinsics_t intrinsics{
-        2050.45835471654,
-        2050.2221293166149,
-        744.36232048649231,
-        624.70234622412681,
+        1943.779757837031,
+        1938.4651639299516,
+        645.8152720114077,
+        631.3921308587916,
     };
     cuAprilTagsHandle detector = nullptr;
     cudaStream_t stream = {};
@@ -119,8 +120,8 @@ int main(int argc, char ** argv)
             std::vector<float> magnitudes;
 
             for (auto t : tags) {
-                if (t.id == 0) {
-                    // empty element
+                if (t.id == 0 || t.id > 32) {
+                    // empty element or unknown tag
                     continue;
                 }
 
@@ -131,7 +132,7 @@ int main(int argc, char ** argv)
                 double pitch = euler[0] * 180 / M_PI; // up-down
                 double roll = euler[2] * 180 / M_PI; // turn
 
-                // std::cout << "id=" << t.id << " tx=" << t.translation[0] << " ty=" << t.translation[1] << " tz=" << t.translation[2] << " yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
+                std::cout << "id=" << t.id << " tx=" << t.translation[0] << " ty=" << t.translation[1] << " tz=" << t.translation[2] << " yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
 
                 auto rot = frc::Rotation3d(units::radian_t{euler[2]}, units::radian_t{euler[0]}, units::radian_t{-euler[1]});
                 auto trl = frc::Translation3d(units::meter_t{-t.translation[2]}, units::meter_t{t.translation[0]}, units::meter_t{-t.translation[1]});

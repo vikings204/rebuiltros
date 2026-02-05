@@ -35,21 +35,23 @@ int main(int argc, char ** argv)
     auto nt_ts_pub = table->GetDoubleTopic("timestamp").Publish();
     auto nt_px_pub = table->GetDoubleTopic("px").Publish();
     auto nt_py_pub = table->GetDoubleTopic("py").Publish();
+    auto nt_yaw_pub = table->GetDoubleTopic("yaw").Publish();
     auto nt_tags_pub = table->GetDoubleTopic("tags").Publish();
     auto nt_delay_pub = table->GetDoubleTopic("delay").Publish();
     nt_ts_pub.SetDefault(0);
     nt_px_pub.SetDefault(0);
     nt_py_pub.SetDefault(0);
+    nt_yaw_pub.SetDefault(0);
     nt_tags_pub.SetDefault(0);
     nt_delay_pub.SetDefault(0);
 
     // camera matrix
     // [ [fx, 0, cx], [0, fy, cy], [0, 0, 1] ]
     cuAprilTagsCameraIntrinsics_t intrinsics{
-        1943.779757837031,
-        1938.4651639299516,
-        645.8152720114077,
-        631.3921308587916,
+        1997.8628505101703,
+        1994.034269654484,
+        712.7713941655713,
+        593.5345604265101,
     };
     cuAprilTagsHandle detector = nullptr;
     cudaStream_t stream = {};
@@ -132,7 +134,7 @@ int main(int argc, char ** argv)
                 double pitch = euler[0] * 180 / M_PI; // up-down
                 double roll = euler[2] * 180 / M_PI; // turn
 
-                std::cout << "id=" << t.id << " tx=" << t.translation[0] << " ty=" << t.translation[1] << " tz=" << t.translation[2] << " yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
+                //std::cout << "id=" << t.id << " tx=" << t.translation[0] << " ty=" << t.translation[1] << " tz=" << t.translation[2] << " yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
 
                 auto rot = frc::Rotation3d(units::radian_t{euler[2]}, units::radian_t{euler[0]}, units::radian_t{-euler[1]});
                 auto trl = frc::Translation3d(units::meter_t{-t.translation[2]}, units::meter_t{t.translation[0]}, units::meter_t{-t.translation[1]});
@@ -142,11 +144,11 @@ int main(int argc, char ** argv)
 
             if (poses.size() == 1) {
                 // one tag, just send the pose
-                auto p = poses[0];
+                auto p = poses[0].ToPose2d().RotateBy(frc::Rotation2d(units::radian_t{M_PI}));
                 auto sendTime = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> secondsSinceCapture = sendTime - captureTime;
 
-                std::cout << "tags=1 px=" << p.X().value() << " py=" << p.Y().value() << " time=" << secondsSinceCapture.count() << "s\n";
+                std::cout << "tags=1 px=" << p.X().value() << " py=" << p.Y().value() << " yaw=" << p.Rotation().Degrees().value() << " time=" << secondsSinceCapture.count() << "s\n";
                 nt_px_pub.Set(p.X().value());
                 nt_py_pub.Set(p.Y().value());
                 nt_tags_pub.Set(1);
@@ -154,23 +156,25 @@ int main(int argc, char ** argv)
                 nt_ts_pub.Set(sendTime.time_since_epoch().count());
             } else {
                 // weighted average based on cam-to-tag distance
-                float total_px = 0.0;
-                float total_py = 0.0;
-                float total_weight = 0.0;
+                double total_px = 0.0;
+                double total_py = 0.0;
+                double total_yaw = 0.0;
+                double total_weight = 0.0;
                 for (unsigned long i = 0; i < poses.size(); i++) {
-                    auto p3d = poses[i];
-                    auto p = p3d.ToPose2d();
-                    float w = pow(M_E, -0.5 * magnitudes[i]);
+                    auto p = poses[i].ToPose2d().RotateBy(frc::Rotation2d(units::radian_t{M_PI}));
+                    double w = pow(M_E, -0.5 * magnitudes[i]);
                     total_px += p.X().value() * w;
                     total_py += p.Y().value() * w;
+                    total_yaw += p.Rotation().Degrees().value() * w;
                     total_weight += w;
                 }
-                float px = total_px / total_weight;
-                float py = total_py / total_weight;
+                double px = total_px / total_weight;
+                double py = total_py / total_weight;
+                double yaw = total_yaw / total_weight;
 
                 auto sendTime = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> secondsSinceCapture = sendTime - captureTime;
-                std::cout << "tags=" << poses.size() << " px=" << px << " py=" << py << " time=" << secondsSinceCapture.count() << "s\n";
+                std::cout << "tags=" << poses.size() << " px=" << px << " py=" << py << " yaw=" << yaw << " time=" << secondsSinceCapture.count() << "s\n";
                 nt_px_pub.Set(px);
                 nt_py_pub.Set(py);
                 nt_tags_pub.Set(poses.size());

@@ -8,7 +8,6 @@
 #include <networktables/NetworkTableInstance.h>
 #include <networktables/NetworkTable.h>
 #include <networktables/DoubleTopic.h>
-#include <cscore_cv.h>
 #include <frc/apriltag/AprilTagFieldLayout.h>
 #include <units/length.h>
 #include <Eigen/Dense> // do not put eigen3/Eigen/Dense, conflicts with wpi flavor of eigen lmao
@@ -19,9 +18,16 @@ int main(int argc, char ** argv)
     (void) argc;
     (void) argv;
 
+    constexpr int imageWidth = 1600;
+    constexpr int imageHeight = 1304;
+    // constexpr int imageWidth = 1280;
+    // constexpr int imageHeight = 720;
+    // constexpr int imageWidth = 640;
+    // constexpr int imageHeight = 480;
+
     cv::VideoCapture cap{0, cv::CAP_V4L2};
-    cap.set(cv::CAP_PROP_FRAME_WIDTH, 1600);
-    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1304);
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, imageWidth);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, imageHeight);
     cap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1);
     cap.set(cv::CAP_PROP_EXPOSURE, 75); // 0 to 100+
     cap.set(cv::CAP_PROP_GAIN, 0);
@@ -45,18 +51,10 @@ int main(int argc, char ** argv)
     nt_yaw_pub.SetDefault(0);
     nt_tags_pub.SetDefault(0);
     nt_delay_pub.SetDefault(0);
-    // cs::CvSource cvstream(
-    //     "vision",
-    //     cs::VideoMode::kMJPEG,
-    //     400,
-    //     326,
-    //     30
-    // );
-    // cs::MjpegServer server("vision_server", 1181);
-    // server.SetSource(cvstream);
 
     // camera matrix
     // [ [fx, 0, cx], [0, fy, cy], [0, 0, 1] ]
+    // always calibrate at res
     cuAprilTagsCameraIntrinsics_t intrinsics{
         1997.8628505101703,
         1994.034269654484,
@@ -66,18 +64,10 @@ int main(int argc, char ** argv)
     cuAprilTagsHandle detector = nullptr;
     cudaStream_t stream = {};
 
-    constexpr float imageScalingFactor = 1.0;
-    intrinsics.cx *= imageScalingFactor;
-    intrinsics.cy *= imageScalingFactor;
-    intrinsics.fx *= imageScalingFactor;
-    intrinsics.fy *= imageScalingFactor;
-    const int imageWidth = std::round(1600.0 * imageScalingFactor);
-    const int imageHeight = std::round(1304.0 * imageScalingFactor);
-    // intrinsics.cx = static_cast<float>(imageWidth) - intrinsics.cx;
-    // intrinsics.cy = static_cast<float>(imageHeight) - intrinsics.cy;
-
-    const int error = nvCreateAprilTagsDetector(&detector, imageWidth, imageHeight, 4, cuAprilTagsFamily::NVAT_TAG36H11, &intrinsics, 0.1651);
-    std::cout << "create error code: " << error << "\n";
+    const int createErr = nvCreateAprilTagsDetector(&detector, imageWidth, imageHeight, 4, cuAprilTagsFamily::NVAT_TAG36H11, &intrinsics, 0.1651);
+    if (createErr != 0) {
+        std::cout << "create error code: " << cudaGetErrorString(cudaError_t(createErr)) << "\n";
+    }
     auto streamErr = cudaStreamCreate(&stream);
     if (streamErr != 0) {
         std::cout << cudaGetErrorString(streamErr);
@@ -87,7 +77,9 @@ int main(int argc, char ** argv)
     std::vector<cuAprilTagsID_t> tags(6);
 
     const cudaError_t mallocErr = cudaMalloc(&imageInput.dev_ptr, imageWidth * imageHeight * sizeof(uchar3));
-    std::cout << "malloc error: " << cudaGetErrorString(mallocErr) << "\n";
+    if (mallocErr != 0) {
+        std::cout << "malloc error: " << cudaGetErrorString(mallocErr) << "\n";
+    }
 
     auto layout = frc::AprilTagFieldLayout::LoadField(frc::AprilTagField::k2026RebuiltWelded);
     layout.SetOrigin(frc::AprilTagFieldLayout::OriginPosition::kBlueAllianceWallRightSide);
@@ -107,26 +99,27 @@ int main(int argc, char ** argv)
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
         // cv::flip(frame, frame, -1);
         //std::cout << "capt\n";
-        if constexpr (imageScalingFactor < 1.0) {
-            cv::resize(frame, frame, cv::Size(imageWidth, imageHeight), 0, 0, cv::INTER_AREA);
-        }
         // auto timeColorConvert = std::chrono::high_resolution_clock::now();
 
-        const cudaError_t memcpyErr = cudaMemcpy(imageInput.dev_ptr, frame.data, 1304 * 1600 * sizeof(uchar3), cudaMemcpyHostToDevice);
-        //std::cout << "memcpy error: " << cudaGetErrorString(memcpyErr) << "\n";
+        const cudaError_t memcpyErr = cudaMemcpy(imageInput.dev_ptr, frame.data, imageWidth * imageHeight * sizeof(uchar3), cudaMemcpyHostToDevice);
+        if (memcpyErr != 0) {
+            std::cout << "memcpy error: " << cudaGetErrorString(memcpyErr) << "\n";
+        }
         imageInput.width = frame.cols;
         imageInput.height = frame.rows;
         imageInput.pitch = frame.cols*sizeof(uchar3);
         // auto timeMemcpy = std::chrono::high_resolution_clock::now();
 
-        const int error2 = cuAprilTagsDetect(detector, &imageInput, tags.data(), &num_detections, tags.capacity(), stream);
-        //std::cout << "detect error code: " << error2 << "\n";
+        const int detectErr = cuAprilTagsDetect(detector, &imageInput, tags.data(), &num_detections, tags.capacity(), stream);
+        cuAprilTagsDetect(detector, &imageInput, tags.data(), &num_detections, tags.capacity(), stream);
+        if (detectErr != 0) {
+            std::cout << "detect error code: " << cudaGetErrorString(cudaError_t(detectErr)) << "\n";
+        }
         // auto timeDetect = std::chrono::high_resolution_clock::now();
 
         if (num_detections > 0) {
             std::vector<frc::Pose3d> poses;
             std::vector<float> magnitudes;
-            // std::vector<cv::Point> pts;
 
             for (auto t : tags) {
                 if (t.id == 0 || t.id > 32) {
@@ -147,19 +140,6 @@ int main(int argc, char ** argv)
                 auto trl = frc::Translation3d(units::meter_t{-t.translation[2]}, units::meter_t{t.translation[0]}, units::meter_t{-t.translation[1]});
                 poses.emplace_back(layout.GetTagPose(t.id).value().TransformBy(frc::Transform3d(trl, rot).Inverse()));
                 magnitudes.push_back(sqrt(t.translation[0]*t.translation[0] + t.translation[1]*t.translation[1] + t.translation[2]*t.translation[2]));
-
-                // pts = {
-                //     {static_cast<int>(std::round(t.corners[0].x)), static_cast<int>(std::round(t.corners[0].y))},
-                //     {static_cast<int>(std::round(t.corners[1].x)), static_cast<int>(std::round(t.corners[1].y))},
-                //     {static_cast<int>(std::round(t.corners[2].x)), static_cast<int>(std::round(t.corners[2].y))},
-                //     {static_cast<int>(std::round(t.corners[3].x)), static_cast<int>(std::round(t.corners[3].y))}
-                // };
-                // for (int i = 0; i < 4; i++) {
-                //     cv::line(frame, pts[i], pts[(i + 1) % 4], cv::Scalar(0, 255, 0), 2);
-                // }
-                // cv::pyrDown(frame, frame);
-                // cv::pyrDown(frame, frame);
-                // cvstream.PutFrame(frame);
             }
 
             if (poses.size() == 1) {
@@ -168,7 +148,7 @@ int main(int argc, char ** argv)
                 auto sendTime = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> secondsSinceCapture = sendTime - captureTime;
 
-                std::cout << "tags=1 px=" << p.X().value() << " py=" << p.Y().value() << " yaw=" << p.Rotation().Degrees().value() << " time=" << secondsSinceCapture.count() << "s\n";
+                std::cout << "tags=1 px=" << p.X().value() << " py=" << p.Y().value() << " yaw=" << p.Rotation().Degrees().value() << " time=" << secondsSinceCapture.count() << "s fps=" << 1.0/secondsSinceCapture.count() << "hz\n";
                 nt_px_pub.Set(p.X().value());
                 nt_py_pub.Set(p.Y().value());
                 nt_yaw_pub.Set(p.Rotation().Degrees().value());
@@ -195,7 +175,7 @@ int main(int argc, char ** argv)
 
                 auto sendTime = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> secondsSinceCapture = sendTime - captureTime;
-                std::cout << "tags=" << poses.size() << " px=" << px << " py=" << py << " yaw=" << yaw << " time=" << secondsSinceCapture.count() << "s\n";
+                std::cout << "tags=" << poses.size() << " px=" << px << " py=" << py << " yaw=" << yaw << " time=" << secondsSinceCapture.count() << "s fps=" << 1.0/secondsSinceCapture.count() << "hz\n";
                 nt_px_pub.Set(px);
                 nt_py_pub.Set(py);
                 nt_yaw_pub.Set(yaw);

@@ -27,7 +27,7 @@ ament_target_dependencies(sample_node rclcpp std_msgs geometry_msgs)
 target_link_libraries(sample_node ${CUDA_LIBRARIES} ${OpenCV_LIBS} libcuapriltags)
 
 add_executable(ntsender src/ntsender.cpp)
-target_link_libraries(ntsender ${CUDA_LIBRARIES} ${OpenCV_LIBS} libcuapriltags wpilibc apriltag)
+target_link_libraries(ntsender ${CUDA_LIBRARIES} ${OpenCV_LIBS} libcuapriltags wpilibc apriltag cscore cameraserver)
 
 # frc971 detector testing
 #set(CMAKE_CXX_STANDARD 20)

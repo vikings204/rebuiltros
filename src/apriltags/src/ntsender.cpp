@@ -8,6 +8,7 @@
 #include <networktables/NetworkTableInstance.h>
 #include <networktables/NetworkTable.h>
 #include <networktables/DoubleTopic.h>
+#include <cscore_cv.h>
 #include <frc/apriltag/AprilTagFieldLayout.h>
 #include <units/length.h>
 #include <Eigen/Dense> // do not put eigen3/Eigen/Dense, conflicts with wpi flavor of eigen lmao
@@ -44,6 +45,15 @@ int main(int argc, char ** argv)
     nt_yaw_pub.SetDefault(0);
     nt_tags_pub.SetDefault(0);
     nt_delay_pub.SetDefault(0);
+    // cs::CvSource cvstream(
+    //     "vision",
+    //     cs::VideoMode::kMJPEG,
+    //     400,
+    //     326,
+    //     30
+    // );
+    // cs::MjpegServer server("vision_server", 1181);
+    // server.SetSource(cvstream);
 
     // camera matrix
     // [ [fx, 0, cx], [0, fy, cy], [0, 0, 1] ]
@@ -78,10 +88,6 @@ int main(int argc, char ** argv)
 
     const cudaError_t mallocErr = cudaMalloc(&imageInput.dev_ptr, imageWidth * imageHeight * sizeof(uchar3));
     std::cout << "malloc error: " << cudaGetErrorString(mallocErr) << "\n";
-
-    Eigen::Matrix3d EDN_TO_NWU_matrix;
-    EDN_TO_NWU_matrix << 0, 0, 1, -1, 0, 0, 0, -1, 0;
-    auto EDN_TO_NWU = frc::Rotation3d(EDN_TO_NWU_matrix);
 
     auto layout = frc::AprilTagFieldLayout::LoadField(frc::AprilTagField::k2026RebuiltWelded);
     layout.SetOrigin(frc::AprilTagFieldLayout::OriginPosition::kBlueAllianceWallRightSide);
@@ -120,6 +126,7 @@ int main(int argc, char ** argv)
         if (num_detections > 0) {
             std::vector<frc::Pose3d> poses;
             std::vector<float> magnitudes;
+            // std::vector<cv::Point> pts;
 
             for (auto t : tags) {
                 if (t.id == 0 || t.id > 32) {
@@ -134,12 +141,25 @@ int main(int argc, char ** argv)
                 double pitch = euler[0] * 180 / M_PI; // up-down
                 double roll = euler[2] * 180 / M_PI; // turn
 
-                //std::cout << "id=" << t.id << " tx=" << t.translation[0] << " ty=" << t.translation[1] << " tz=" << t.translation[2] << " yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
+                std::cout << "id=" << t.id << " tx=" << t.translation[0] << " ty=" << t.translation[1] << " tz=" << t.translation[2] << " yaw=" << yaw << " pitch=" << pitch << " roll=" << roll << "\n";
 
                 auto rot = frc::Rotation3d(units::radian_t{euler[2]}, units::radian_t{euler[0]}, units::radian_t{-euler[1]});
                 auto trl = frc::Translation3d(units::meter_t{-t.translation[2]}, units::meter_t{t.translation[0]}, units::meter_t{-t.translation[1]});
                 poses.emplace_back(layout.GetTagPose(t.id).value().TransformBy(frc::Transform3d(trl, rot).Inverse()));
                 magnitudes.push_back(sqrt(t.translation[0]*t.translation[0] + t.translation[1]*t.translation[1] + t.translation[2]*t.translation[2]));
+
+                // pts = {
+                //     {static_cast<int>(std::round(t.corners[0].x)), static_cast<int>(std::round(t.corners[0].y))},
+                //     {static_cast<int>(std::round(t.corners[1].x)), static_cast<int>(std::round(t.corners[1].y))},
+                //     {static_cast<int>(std::round(t.corners[2].x)), static_cast<int>(std::round(t.corners[2].y))},
+                //     {static_cast<int>(std::round(t.corners[3].x)), static_cast<int>(std::round(t.corners[3].y))}
+                // };
+                // for (int i = 0; i < 4; i++) {
+                //     cv::line(frame, pts[i], pts[(i + 1) % 4], cv::Scalar(0, 255, 0), 2);
+                // }
+                // cv::pyrDown(frame, frame);
+                // cv::pyrDown(frame, frame);
+                // cvstream.PutFrame(frame);
             }
 
             if (poses.size() == 1) {
@@ -151,6 +171,7 @@ int main(int argc, char ** argv)
                 std::cout << "tags=1 px=" << p.X().value() << " py=" << p.Y().value() << " yaw=" << p.Rotation().Degrees().value() << " time=" << secondsSinceCapture.count() << "s\n";
                 nt_px_pub.Set(p.X().value());
                 nt_py_pub.Set(p.Y().value());
+                nt_yaw_pub.Set(p.Rotation().Degrees().value());
                 nt_tags_pub.Set(1);
                 nt_delay_pub.Set(secondsSinceCapture.count());
                 nt_ts_pub.Set(sendTime.time_since_epoch().count());
@@ -177,10 +198,13 @@ int main(int argc, char ** argv)
                 std::cout << "tags=" << poses.size() << " px=" << px << " py=" << py << " yaw=" << yaw << " time=" << secondsSinceCapture.count() << "s\n";
                 nt_px_pub.Set(px);
                 nt_py_pub.Set(py);
+                nt_yaw_pub.Set(yaw);
                 nt_tags_pub.Set(poses.size());
                 nt_delay_pub.Set(secondsSinceCapture.count());
                 nt_ts_pub.Set(sendTime.time_since_epoch().count());
             }
+        } else {
+            nt_tags_pub.Set(0.0);
         }
         // auto timeProcessing = std::chrono::high_resolution_clock::now();
 

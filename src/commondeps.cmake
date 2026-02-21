@@ -26,6 +26,8 @@ find_package(wpilibc CONFIG REQUIRED)
 find_package(hal CONFIG REQUIRED)
 find_package(wpiutil CONFIG REQUIRED)
 find_package(apriltag CONFIG REQUIRED)
+find_package(cscore CONFIG REQUIRED)
+find_package(cameraserver CONFIG REQUIRED)
 
 # vendordeps, some related to each other
 
